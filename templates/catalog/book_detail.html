@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }} - Antigravity Bookstore{% endblock %}
+
+{% block content %}
+<div class="grid" style="grid-template-columns: 1fr 2fr; gap: 4rem; margin-top: 4rem;">
+    <div>
+        <div style="height: 500px; background: rgba(0,0,0,0.2); border-radius: 1rem; display: flex; align-items: center; justify-content: center;">
+            {% if book.bookimage_set.first %}
+                <img src="{{ book.bookimage_set.first.img_url }}" alt="{{ book.title }}" style="max-height: 100%; border-radius: 1rem;">
+            {% else %}
+                <span style="color: var(--text-muted);">No Image</span>
+            {% endif %}
+        </div>
+    </div>
+    <div>
+        <h1 style="font-size: 3rem; margin-bottom: 0.5rem;">{{ book.title }}</h1>
+        <p style="font-size: 1.25rem; color: var(--text-muted); margin-bottom: 2rem;">
+            By {% for author in book.authors.all %}{{ author.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+            | Publisher: {{ book.publisher.name|default:"Unknown" }}
+        </p>
+        
+        <div style="margin-bottom: 2rem;">
+            <span style="font-size: 2.5rem; font-weight: 700; color: var(--accent);">${{ book.price }}</span>
+            <span style="margin-left: 2rem; color: {% if book.stock > 0 %}var(--success){% else %}var(--danger){% endif %};">
+                {% if book.stock > 0 %}In Stock ({{ book.stock }}){% else %}Out of Stock{% endif %}
+            </span>
+        </div>
+
+        <div style="margin-bottom: 3rem;">
+            <h3>Description</h3>
+            <p style="color: var(--text-muted);">This is a premium edition of "{{ book.title }}". Experience the magic of reading with this masterpiece.</p>
+        </div>
+
+        <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 2rem;">
+            <form action="/sales/cart/add/{{ book.id }}/" method="post" style="flex-grow: 1;">
+                {% csrf_token %}
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="number" name="quantity" value="1" min="1" max="{{ book.stock }}" style="width: 80px; padding: 0.75rem; border-radius: 0.5rem; background: var(--bg-card); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                    <button type="submit" class="btn btn-primary" style="flex-grow: 1;">Add to Cart</button>
+                </div>
+            </form>
+            <a href="{% url 'add_to_wishlist' book.id %}" class="btn" style="border: 1px solid var(--primary); color: var(--primary);">❤ Add to Wishlist</a>
+        </div>
+    </div>
+</div>
+
+<section style="margin-top: 4rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2>Customer Reviews</h2>
+        {% if user.is_authenticated %}
+            <button onclick="document.getElementById('review-form').style.display='block'" class="btn btn-primary">Write a Review</button>
+        {% endif %}
+    </div>
+
+    <div id="review-form" class="card" style="display: none; margin-bottom: 2rem;">
+        <h3>Write your review</h3>
+        <form action="{% url 'add_review' book.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Rating</label>
+                <select name="rating" required>
+                    <option value="5">5 - Excellent</option>
+                    <option value="4">4 - Very Good</option>
+                    <option value="3">3 - Good</option>
+                    <option value="2">2 - Fair</option>
+                    <option value="1">1 - Poor</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Comment</label>
+                <textarea name="comment" rows="4" required placeholder="Share your thoughts about this book..."></textarea>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button type="submit" class="btn btn-primary">Submit Review</button>
+                <button type="button" onclick="document.getElementById('review-form').style.display='none'" class="btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <div style="margin-top: 2rem;">
+        {% for review in reviews %}
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                    <strong>{{ review.customer.member.username }}</strong>
+                    <span style="color: var(--accent);">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= review.rating %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                    </span>
+                </div>
+                <p>{{ review.comment }}</p>
+                <small style="color: var(--text-muted);">{{ review.created_at|date:"F j, Y" }}</small>
+            </div>
+        {% empty %}
+            <p>No reviews yet. Be the first to review this book!</p>
+        {% endfor %}
+    </div>
+</section>
+
+{% if related_books %}
+<section style="margin-top: 4rem;">
+    <h2 style="margin-bottom: 2rem;">Related Books</h2>
+    <div class="grid">
+        {% for rb in related_books %}
+            <div class="card">
+                <div style="height: 200px; background: rgba(0,0,0,0.2); border-radius: 0.5rem; margin-bottom: 1rem; display: flex; align-items: center; justify-content: center;">
+                    {% if rb.bookimage_set.first %}
+                        <img src="{{ rb.bookimage_set.first.img_url }}" alt="{{ rb.title }}" style="max-height: 100%;">
+                    {% endif %}
+                </div>
+                <h4 style="margin: 0;">{{ rb.title }}</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
+                    <span style="font-weight: 700; color: var(--accent);">${{ rb.price }}</span>
+                    <a href="{% url 'book_detail' rb.id %}" class="btn btn-primary" style="padding: 0.5rem 1rem;">View</a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

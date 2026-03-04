@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Shopping Cart - Antigravity Bookstore{% endblock %}
+
+{% block content %}
+<h1 style="margin: 4rem 0 2rem;">Your Shopping Cart</h1>
+
+{% if items %}
+    <div class="card">
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left;">
+                    <th style="padding: 1rem;">Product</th>
+                    <th style="padding: 1rem;">Price</th>
+                    <th style="padding: 1rem;">Quantity</th>
+                    <th style="padding: 1rem;">Total</th>
+                    <th style="padding: 1rem;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <div style="width: 60px; height: 80px; background: rgba(0,0,0,0.2); border-radius: 0.25rem; display: flex; align-items: center; justify-content: center;">
+                                    {% if item.book.bookimage_set.first %}
+                                        <img src="{{ item.book.bookimage_set.first.img_url }}" alt="{{ item.book.title }}" style="max-height: 100%;">
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h4 style="margin: 0;">{{ item.book.title }}</h4>
+                                    <small style="color: var(--text-muted);">{{ item.book.authors.first.name|default:"Unknown" }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1rem;">${{ item.book.price }}</td>
+                        <td style="padding: 1rem;">
+                            <form action="{% url 'update_cart_item' item.id %}" method="post" style="display: flex; align-items: center; gap: 0.5rem;">
+                                {% csrf_token %}
+                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" step="1" style="width: 60px; padding: 0.5rem; border-radius: 0.25rem; background: var(--bg-dark); color: white; border: 1px solid rgba(255,255,255,0.1);">
+                                <button type="submit" class="btn" style="background: transparent; color: var(--primary); padding: 0;">Update</button>
+                            </form>
+                        </td>
+                        <td style="padding: 1rem;">${% widthratio item.book.price 1 item.quantity %}</td>
+                        <td style="padding: 1rem;">
+                            <a href="{% url 'remove_from_cart' item.id %}" style="color: var(--danger); text-decoration: none;">Remove</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="margin-top: 2rem; display: flex; justify-content: flex-end; align-items: center; gap: 2rem;">
+            <div>
+                <span style="color: var(--text-muted); font-size: 1.25rem;">Total:</span>
+                <span style="font-size: 2rem; font-weight: 700; color: var(--accent); margin-left: 1rem;">${{ total_price }}</span>
+            </div>
+            <a href="{% url 'checkout' %}" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.25rem;">Checkout</a>
+        </div>
+    </div>
+{% else %}
+    <div class="card" style="text-align: center; padding: 4rem;">
+        <h2 style="color: var(--text-muted);">Your cart is empty</h2>
+        <a href="/" class="btn btn-primary" style="margin-top: 2rem;">Start Shopping</a>
+    </div>
+{% endif %}
+{% endblock %}

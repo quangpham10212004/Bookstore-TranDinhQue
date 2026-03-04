@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout - Antigravity Bookstore{% endblock %}
+
+{% block content %}
+<h1 style="margin: 4rem 0 2rem;">Checkout</h1>
+
+<div class="grid" style="grid-template-columns: 2fr 1fr; gap: 4rem;">
+    <div>
+        <div class="card">
+            <h3 style="margin-bottom: 2rem;">Shipping Address</h3>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Please confirm your shipping details.</p>
+            <form id="checkout-form" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="address_id">Select Shipping Address</label>
+                    <select name="address_id" required>
+                        {% for address in addresses %}
+                            <option value="{{ address.id }}">{{ address.num }} {{ address.street }}, {{ address.city }}</option>
+                        {% empty %}
+                            <option value="">No addresses found. Please add one in your profile.</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <p style="font-size: 0.8rem; margin-top: -1rem; margin-bottom: 2rem;">
+                    <a href="/users/profile/" style="color: var(--primary);">+ Manage Addresses</a>
+                </p>
+                
+                <h3 style="margin: 2rem 0 1rem;">Payment Method</h3>
+                <div class="form-group">
+                    <select name="payment_method" required>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="paypal">PayPal</option>
+                        <option value="cod">Cash on Delivery</option>
+                    </select>
+                </div>
+            </form>
+
+            <h3 style="margin: 2rem 0 1rem;">Apply Coupon</h3>
+            <form action="." method="get" style="display: flex; gap: 0.5rem;">
+                <input type="text" name="coupon" placeholder="Enter coupon code" style="flex-grow: 1; padding: 0.5rem; background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 0.25rem;">
+                <button type="submit" class="btn btn-primary" style="padding: 0.5rem 1rem;">Apply</button>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
+            {% for item in items %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-size: 0.9rem;">
+                    <span style="color: var(--text-muted);">{{ item.book.title }} x {{ item.quantity }}</span>
+                    <span>${% widthratio item.book.price 1 item.quantity %}</span>
+                </div>
+            {% endfor %}
+            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
+            <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.25rem;">
+                <span>Total</span>
+                <span style="color: var(--accent);">${{ total_price }}</span>
+            </div>
+            
+            <button type="submit" form="checkout-form" class="btn btn-primary" style="width: 100%; margin-top: 2rem; padding: 1rem;">
+                Confirm Order
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
